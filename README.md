@@ -1,5 +1,17 @@
 # GAMES202 homework0
 
+## List
+
+1. **2-pass**
+2. **BIAS**
+3. **PCF**
+4. **PCSS**
+5. **Object Translation**。
+
+<img width="557" alt="image" src="https://github.com/Remyuu/GAMES202-HW1/assets/64857501/53bbe6e5-c5ca-47ab-8f15-301019723166">
+
+
+
 ## Usage
 
 ### For Visual Studio Code
