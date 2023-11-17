@@ -121,9 +121,9 @@ vec3 GetGBufferDiffuse(vec2 uv) {
  * uv is in screen space, [0, 1] x [0, 1].
  *
  */
-vec3 EvalDiffuse(vec3 wi, vec3 wo, vec2 uv) {
-  vec3 reflectivity = GetGBufferDiffuse(uv);
-  vec3 normal = GetGBufferNormalWorld(uv);
+vec3 EvalDiffuse(vec3 wi, vec3 wo, vec2 screenUV) {
+  vec3 reflectivity = GetGBufferDiffuse(screenUV);
+  vec3 normal = GetGBufferNormalWorld(screenUV);
   float cosi = max(0., dot(normal, wi));
   vec3 f_r = reflectivity * cosi;
   return f_r;
@@ -134,13 +134,13 @@ vec3 EvalDiffuse(vec3 wi, vec3 wo, vec2 uv) {
  * uv is in screen space, [0, 1] x [0, 1].
  *
  */
-vec3 EvalDirectionalLight(vec2 uv) {
-  vec3 Li = uLightRadiance * GetGBufferuShadow(uv);
+vec3 EvalDirectionalLight(vec2 screenUV) {
+  vec3 Li = uLightRadiance * GetGBufferuShadow(screenUV);
   return Li;
 }
 
 bool RayMarch(vec3 ori, vec3 dir, out vec3 hitPos) {
-  const int totalStepTimes = 70;
+  const int totalStepTimes = 150;
   const float threshold = 0.0001;
   float step = 0.05;
   vec3 stepDir = normalize(dir) * step;
@@ -174,24 +174,26 @@ vec3 EvalSSR(vec3 wi, vec3 wo, vec2 screenUV) {
   }
 }
 
-#define SAMPLE_NUM 1
+#define SAMPLE_NUM 10
 
 vec3 EvalIndirectionLight(vec3 wi, vec3 wo, vec2 screenUV){
-  float s = InitRand(gl_FragCoord.xy);
   vec3 L_ind = vec3(0.0);
+  float s = InitRand(gl_FragCoord.xy);
+  vec3 normal = GetGBufferNormalWorld(screenUV);
+  vec3 b1, b2;
+  LocalBasis(normal, b1, b2);
 
   for(int i = 0; i < SAMPLE_NUM; i++){
     float pdf;
-    vec3 localDir = SampleHemisphereUniform(s, pdf);
-    vec3 normal = GetGBufferNormalWorld(screenUV);
-    vec3 b1, b2;
-    LocalBasis(normal, b1, b2);
-    vec3 dir = normalize(mat3(b1, b2, normal) * localDir);
+    vec3 direction = SampleHemisphereUniform(s, pdf);
+    vec3 worldDir = normalize(mat3(b1, b2, normal) * direction);
 
     vec3 position_1;
-    if(RayMarch(vPosWorld.xyz, dir, position_1)){
+    if(RayMarch(vPosWorld.xyz, worldDir, position_1)){ // 采样光线碰到了 position_1
       vec2 hitScreenUV = GetScreenCoordinate(position_1);
-      L_ind += EvalDiffuse(dir, wo, screenUV) / pdf * EvalDiffuse(wi, dir, hitScreenUV) * EvalDirectionalLight(hitScreenUV);
+      vec3 bsdf_d = EvalDiffuse(worldDir, wo, screenUV); // 直接光照
+      vec3 bsdf_i = EvalDiffuse(wi, worldDir, hitScreenUV); // 间接光照
+      L_ind += bsdf_d / pdf * bsdf_i * EvalDirectionalLight(hitScreenUV);
     }
   }
   L_ind /= float(SAMPLE_NUM);
@@ -220,21 +222,21 @@ vec3 EvalIndirectionLight(vec3 wi, vec3 wo, vec2 screenUV){
 
 // Main entry point for the shader
 void main() {
-  // float s = InitRand(gl_FragCoord.xy);
   vec3 wi = normalize(uLightDir);
   vec3 wo = normalize(uCameraPos - vPosWorld.xyz);
   vec2 screenUV = GetScreenCoordinate(vPosWorld.xyz);
 
-  // Basic mirror-only SSR
-  float reflectivity = 0.0;
+  // Basic mirror-only SSR coefficient
+  float ssrCoeff = 0.0;
+  // Indirection Light coefficient
+  float indCoeff = 0.3;
 
   // Direction Light
   vec3 L_d = EvalDiffuse(wi, wo, screenUV) * EvalDirectionalLight(screenUV);
   // SSR Light
-  // vec3 L_ssr = EvalSSR(wi, wo, screenUV) * reflectivity;
-  vec3 L_ssr =  vec3(0);
+  vec3 L_ssr = EvalSSR(wi, wo, screenUV) * ssrCoeff;
   // Indirection Light
-  vec3 L_i = EvalIndirectionLight(wi, wo, screenUV);
+  vec3 L_i = EvalIndirectionLight(wi, wo, screenUV) * indCoeff;
 
   vec3 result = L_d + L_ssr + L_i;
   vec3 color = pow(clamp(result, vec3(0.0), vec3(1.0)), vec3(1.0 / 2.2));
