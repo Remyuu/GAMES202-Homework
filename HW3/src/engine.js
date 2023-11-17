@@ -111,7 +111,9 @@ function GAMES202Main() {
 		}
 		requestAnimationFrame(mainLoop);
 	}
+
 	requestAnimationFrame(mainLoop);
+
 }
 
 function setTransform(t_x, t_y, t_z, s_x, s_y, s_z, r_x = 0, r_y = 0, r_z = 0) {
