@@ -24,11 +24,11 @@ function GAMES202Main() {
 	// Add camera
 	const camera = new THREE.PerspectiveCamera(75, gl.canvas.clientWidth / gl.canvas.clientHeight, 5e-2, 1e2);
 	let cameraPosition, cameraTarget;
-	// /*
+
 	// Cube
 	cameraPosition = [6, 1, 0]
 	cameraTarget = [0, 0, 0]
-	// */
+
 
 	// Cave
 	// cameraPosition = [4.18927, 1.0313, 2.07331]
