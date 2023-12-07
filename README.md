@@ -20,7 +20,9 @@ All projects have been tested.
 
 ## GAMES202 Homework Collection
 
-This repository contains all the assignments from the GAMES101 course, including both the **fundamental and advanced parts**. Contributions and suggestions for improvement are welcome! **Note**: This repository is for learning and discussion purposes only. Direct code copying for course submission is discouraged. Please ensure academic integrity when completing assignments.
+This repository contains all the assignments from the GAMES101 course, including both the **fundamental and advanced parts**. Contributions and suggestions for improvement are welcome! 
+
+**Note**: This repository is for learning and discussion purposes only. Direct code copying for course submission is discouraged. Please ensure academic integrity when completing assignments.
 
 ## Assignment
 
